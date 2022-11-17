@@ -1,0 +1,7 @@
+.vscode
+fill.sh
+**/*.swp
+**/*.sublime-workspace
+.idea
+main
+schedule
