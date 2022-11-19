@@ -86,7 +86,6 @@ const (
 	EveryDay
 	EveryWeek
 	EveryMonth
-	// EveryDayOfWeekOfMonth
 	EveryYear
 )
 
@@ -99,16 +98,14 @@ func init() {
 		EveryDay:   "EveryDay",
 		EveryWeek:  "EveryWeek",
 		EveryMonth: "EveryMonth",
-		// EveryDayOfWeekOfMonth: "EveryDayOfWeekOfMonth",
-		EveryYear: "EveryYear",
+		EveryYear:  "EveryYear",
 	}
 	namesToPeriod = map[string]Period{
 		"Once":       Once,
 		"EveryDay":   EveryDay,
 		"EveryWeek":  EveryWeek,
 		"EveryMonth": EveryMonth,
-		// "EveryDayOfWeekOfMonth": EveryDayOfWeekOfMonth,
-		"EveryYear": EveryYear,
+		"EveryYear":  EveryYear,
 	}
 }
 

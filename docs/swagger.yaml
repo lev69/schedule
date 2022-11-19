@@ -1,0 +1,272 @@
+definitions:
+  lib.Duration:
+    properties:
+      time.Duration:
+        type: integer
+    type: object
+  lib.Meeting:
+    properties:
+      MeetingId:
+        type: integer
+      creatorId:
+        type: integer
+      duration:
+        $ref: '#/definitions/lib.Duration'
+      firstOccurence:
+        type: string
+      members:
+        items:
+          $ref: '#/definitions/lib.Participant'
+        type: array
+      repeat:
+        type: integer
+    type: object
+  lib.Participant:
+    properties:
+      status:
+        type: integer
+      userId:
+        type: integer
+    type: object
+  lib.User:
+    properties:
+      UserId:
+        type: integer
+      name:
+        type: string
+    type: object
+host: localhost:8000
+info:
+  contact: {}
+  description: Schedule is simple calendare service
+  license:
+    name: WTFPL
+  title: Schedule API
+  version: "0.9"
+paths:
+  /meeting:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: get meeting for given id or list with all meetings
+      parameters:
+      - description: Meeting ID
+        in: path
+        name: id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Meeting information
+          schema:
+            $ref: '#/definitions/lib.Meeting'
+        "400":
+          description: empty
+          schema:
+            type: string
+        "404":
+          description: empty
+          schema:
+            type: string
+        "500":
+          description: empty
+          schema:
+            type: string
+      summary: get meetings
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: add new meeting
+      parameters:
+      - description: Organizator ID
+        in: path
+        name: creator_id
+        required: true
+        type: integer
+      - description: Member ID list separated with a comma (',')
+        in: path
+        items:
+          type: integer
+        name: member_ids
+        required: true
+        type: array
+      - description: Meeting start time in RFC3339
+        in: path
+        name: start_at
+        required: true
+        type: string
+      - description: Meeting duration in format '1h2m3s'. Any of values may be ommited.
+        in: path
+        name: duration
+        required: true
+        type: string
+      - description: string enums
+        enum:
+        - lib.Period
+        in: path
+        name: period
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Meeting ID
+          schema:
+            type: integer
+        "400":
+          description: empty
+          schema:
+            type: string
+        "500":
+          description: empty
+          schema:
+            type: string
+      summary: add new meeting
+  /response:
+    put:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: send presence responce
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      - description: Meeting ID
+        in: path
+        name: meeting_id
+        required: true
+        type: integer
+      - description: string enums
+        enum:
+        - lib.Presence
+        in: path
+        name: presence
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Meeting ID
+          schema:
+            type: integer
+        "400":
+          description: empty
+          schema:
+            type: string
+        "404":
+          description: empty
+          schema:
+            type: string
+        "500":
+          description: empty
+          schema:
+            type: string
+      summary: send presence response
+  /user:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: returns user information for given id or list with information
+        about all users
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User information
+          schema:
+            items:
+              items:
+                $ref: '#/definitions/lib.User'
+              type: array
+            type: array
+        "400":
+          description: empty
+          schema:
+            type: string
+        "404":
+          description: empty
+          schema:
+            type: string
+        "500":
+          description: empty
+          schema:
+            type: string
+      summary: get user information
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: add new user
+      parameters:
+      - description: User name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User ID
+          schema:
+            type: integer
+        "400":
+          description: empty
+          schema:
+            type: string
+        "500":
+          description: empty
+          schema:
+            type: string
+      summary: add new user
+  /user_meetings:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: get user meetings for specified period
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Search period start time in RFC3339
+        in: path
+        name: start_at
+        required: true
+        type: string
+      - description: Search period duration in format '1h2m3s'. Any of values may
+          be ommited.
+        in: path
+        name: duration
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Meeting ID
+          schema:
+            type: integer
+        "400":
+          description: empty
+          schema:
+            type: string
+        "404":
+          description: empty
+          schema:
+            type: string
+        "500":
+          description: empty
+          schema:
+            type: string
+      summary: get user meetings for specified period
+swagger: "2.0"

@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	_ "example.com/schedule/docs"
 )
 
 const (
@@ -74,7 +76,16 @@ func FindFreeTimeHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// handler for GET method for /user path
+// @Summary     get user information
+// @Description returns user information for given id or list with information about all users
+// @Accept      application/x-www-form-urlencoded
+// @Produce     application/json
+// @Param       id  path  uint32              false "User ID"
+// @Success     200       {array}  []lib.User "User information"
+// @Failure     400       {string} string     "empty"
+// @Failure     404       {string} string     "empty"
+// @Failure     500       {string} string     "empty"
+// @Router      /user [get]
 func userGetHandler(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		log.Printf("error: GET /user: parse form: %v\n", err)
@@ -132,7 +143,15 @@ func userGetHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(result)
 }
 
-// handler for POST method for /user path
+// @Summary     add new user
+// @Description add new user
+// @Accept      application/x-www-form-urlencoded
+// @Produce     application/json
+// @Param       name  path  string              true "User name"
+// @Success     200       {object} lib.UID "User ID"
+// @Failure     400       {string} string     "empty"
+// @Failure     500       {string} string     "empty"
+// @Router      /user [post]
 func userPostHandler(w http.ResponseWriter, r *http.Request) {
 	if r.ParseForm() != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -153,7 +172,16 @@ func userPostHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(struct{ Id UID }{id})
 }
 
-// handler for GET method for /meeting path
+// @Summary     get meetings
+// @Description get meeting for given id or list with all meetings
+// @Accept      application/x-www-form-urlencoded
+// @Produce     application/json
+// @Param       id  path  string              false "Meeting ID"
+// @Success     200       {object} lib.Meeting "Meeting information"
+// @Failure     400       {string} string     "empty"
+// @Failure     404       {string} string     "empty"
+// @Failure     500       {string} string     "empty"
+// @Router      /meeting [get]
 func meetingGetHandler(w http.ResponseWriter, r *http.Request) {
 	if r.ParseForm() != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -207,7 +235,19 @@ func meetingGetHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(result)
 }
 
-// handler for POST method for /meeting path
+// @Summary     add new meeting
+// @Description add new meeting
+// @Accept      application/x-www-form-urlencoded
+// @Produce     application/json
+// @Param       creator_id  path  uint32              true "Organizator ID"
+// @Param       member_ids  path  []uint32              true "Member ID list separated with a comma (',')"
+// @Param       start_at  path  string 	true "Meeting start time in RFC3339"
+// @Param       duration  path  string 	true "Meeting duration in format '1h2m3s'. Any of values may be ommited."
+// @Param       period  path  string 	false "string enums" Enums(lib.Period)
+// @Success     200       {object} lib.MeetingId "Meeting ID"
+// @Failure     400       {string} string     "empty"
+// @Failure     500       {string} string     "empty"
+// @Router      /meeting [post]
 func meetingPostHandler(w http.ResponseWriter, r *http.Request) {
 	if r.ParseForm() != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -284,7 +324,18 @@ func meetingPostHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(struct{ Id MeetingId }{id})
 }
 
-// handler for PUT method for /response path
+// @Summary     send presence response
+// @Description send presence responce
+// @Accept      application/x-www-form-urlencoded
+// @Produce     application/json
+// @Param       user_id  path  uint32           true "User ID"
+// @Param       meeting_id  path  uint32              true "Meeting ID"
+// @Param       presence  path  string              true "string enums" Enums(lib.Presence)
+// @Success     200       {object} lib.MeetingId "Meeting ID"
+// @Failure     400       {string} string     "empty"
+// @Failure     404       {string} string     "empty"
+// @Failure     500       {string} string     "empty"
+// @Router      /response [put]
 func responsePutHandler(w http.ResponseWriter, r *http.Request) {
 	if r.ParseForm() != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -348,7 +399,18 @@ func responsePutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// handler for GET method for /user_meetings path
+// @Summary     get user meetings for specified period
+// @Description get user meetings for specified period
+// @Accept      application/x-www-form-urlencoded
+// @Produce     application/json
+// @Param       id  path  uint32        true "User ID"
+// @Param       start_at  path  string 	true "Search period start time in RFC3339"
+// @Param       duration  path  string 	true "Search period duration in format '1h2m3s'. Any of values may be ommited."
+// @Success     200       {object} lib.MeetingId "Meeting ID"
+// @Failure     400       {string} string     "empty"
+// @Failure     404       {string} string     "empty"
+// @Failure     500       {string} string     "empty"
+// @Router      /user_meetings [get]
 func userMeetingsGetHandler(w http.ResponseWriter, r *http.Request) {
 	if r.ParseForm() != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -405,6 +467,10 @@ func userMeetingsGetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//
+// helpers
+//
+
 func dateToTime(year int, month time.Month, day int) time.Time {
 	return time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
 }
@@ -450,10 +516,6 @@ func (m Meeting) meetingStartTimeAfter(t time.Time) time.Time {
 			meetingStartTime = m.FirstOccurence.AddDate(0, monthDistance, 0)
 		}
 		return meetingStartTime
-	// case EveryDayOfWeekOfMonth:
-	// 	meetingWeek := (m.FirstOccurence.Day() - 1) / 7 + 1
-	// 	checkWeek := (t.Day() - 1) / 7 + 1
-	// 	return meetingWeek == checkWeek && m.FirstOccurence.Weekday() == t.Weekday()
 	case EveryYear:
 		yearPeriod := t.Year()
 		yearStart := m.FirstOccurence.Year()
@@ -477,57 +539,6 @@ func (m Meeting) meetingStartTimeAfter(t time.Time) time.Time {
 		return time.Time{}
 	}
 }
-
-// func (m Meeting) onDate(t time.Time) bool {
-// 	switch m.Repeat {
-// 	case Once:
-// 		meetingDate := clockToDate(m.FirstOccurence.Date())
-// 		checkDate := clockToDate(t.Date())
-// 		return checkDate == meetingDate
-// 	case EveryDay:
-// 		return m.FirstOccurence.Add(m.Duration.Duration).After(t) && m.FirstOccurence.Add(m.Duration.Duration).After(t)
-// 	case EveryWeek:
-// 		return m.FirstOccurence.Weekday() == t.Weekday()
-// 	case EveryDayOfMonth:
-// 		return m.FirstOccurence.Day() == t.Day()
-// 	case EveryDayOfWeekOfMonth:
-// 		meetingWeek := (m.FirstOccurence.Day()-1)/7 + 1
-// 		checkWeek := (t.Day()-1)/7 + 1
-// 		return meetingWeek == checkWeek && m.FirstOccurence.Weekday() == t.Weekday()
-// 	case EveryYear:
-// 		return m.FirstOccurence.Day() == t.Day() && m.FirstOccurence.Month() == t.Month()
-// 	default:
-// 		return false
-// 	}
-// }
-
-// func (m Meeting) nextSinceTime(t time.Time) time.Time {
-// 	switch m.Repeat {
-// 	case Once:
-// 		if m.FirstOccurence.Add(m.Duration.Duration).After(t) {
-// 			return m.FirstOccurence
-// 		}
-// 		return time.Time{}
-// 	case EveryDay:
-// 		if clockToTime(m.FirstOccurence.Add(m.Duration.Duration).Clock()).After(clockToTime(t.Clock())) {
-// 			return
-// 		}
-// 		// return true
-// 	case EveryWeek:
-// 		// return m.FirstOccurence.Weekday() == t.Weekday()
-// 	case EveryDayOfMonth:
-// 		// return m.FirstOccurence.Day() == t.Day()
-// 	case EveryDayOfWeekOfMonth:
-// 		// meetingWeek := (m.FirstOccurence.Day() - 1) / 7 + 1
-// 		// checkWeek := (t.Day() - 1) / 7 + 1
-// 		// return meetingWeek == checkWeek && m.FirstOccurence.Weekday() == t.Weekday()
-// 	case EveryYear:
-// 		// return m.FirstOccurence.Day() == t.Day() && m.FirstOccurence.Month() == t.Month()
-// 	default:
-// 		return time.Time{}
-// 		// return false
-// 	}
-// }
 
 type parameterOptions uint
 
