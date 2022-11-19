@@ -3,6 +3,7 @@ package lib
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -59,6 +60,7 @@ func ResponseHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// general handler for /user_meetings path
 func UserMeetingsHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
@@ -68,9 +70,14 @@ func UserMeetingsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func FindFreeTimeHandler(w http.ResponseWriter, r *http.Request) {
+
+}
+
 // handler for GET method for /user path
 func userGetHandler(w http.ResponseWriter, r *http.Request) {
-	if r.ParseForm() != nil {
+	if err := r.ParseForm(); err != nil {
+		log.Printf("error: GET /user: parse form: %v\n", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -84,6 +91,7 @@ func userGetHandler(w http.ResponseWriter, r *http.Request) {
 	if idSet {
 		tmp, err := strconv.ParseUint(v[0], 10, 32)
 		if err != nil {
+			log.Printf("error: GET /user: parse %q value (%q): %v\n", idTag, v[0], err)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -94,12 +102,14 @@ func userGetHandler(w http.ResponseWriter, r *http.Request) {
 			if errors.Is(err, ErrNotExist) {
 				w.WriteHeader(http.StatusNotFound)
 			} else {
+				log.Printf("error: GET /user: find id=%v: %v\n", id, err)
 				w.WriteHeader(http.StatusInternalServerError)
 			}
 			return
 		}
 		result, err := json.MarshalIndent(usr, "", "  ")
 		if err != nil {
+			log.Printf("error: GET /user: marshal result: %v\n", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -227,6 +237,15 @@ func meetingPostHandler(w http.ResponseWriter, r *http.Request) {
 			id, err := strconv.ParseUint(num, 10, 32)
 			if err != nil {
 				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			_, err = userFindById(UID(id))
+			if err != nil {
+				if errors.Is(err, ErrNotExist) {
+					w.WriteHeader(http.StatusNotFound)
+				} else {
+					w.WriteHeader(http.StatusInternalServerError)
+				}
 				return
 			}
 			members = append(members, Participant{UserId: UID(id), Status: Unknown})
@@ -528,27 +547,32 @@ func checkArgs(args *url.Values, params parameters) bool {
 			if opt&parameterRequired == 0 {
 				continue
 			} else {
+				log.Printf("error: check parameters: required %q not found\n", k)
 				return false
 			}
 		}
 		switch len(val) {
 		case 0:
 			if opt&emptyValue == 0 {
+				log.Printf("error: check parameters: %q: value required\n", k)
 				return false
 			}
 		case 1:
 			if opt&(singleValue|multipleValue) == 0 {
+				log.Printf("error: check parameters: %q: no value required (%q provided)\n", k, val[0])
 				return false
 			}
 		default:
 			if opt&multipleValue == 0 {
+				log.Printf("error: check parameters: %q: no multiple value allowed (%v provided)\n", k, val)
 				return false
 			}
 		}
 	}
 
 	for k := range *args {
-		if _, ok := params[k]; !ok {
+		if k, ok := params[k]; !ok {
+			log.Printf("error: check parameters: unknown parameter: %q\n", k)
 			return false
 		}
 	}

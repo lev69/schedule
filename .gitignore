@@ -5,3 +5,5 @@ fill.sh
 .idea
 main
 schedule
+*.log
+*.txt

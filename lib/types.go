@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
@@ -48,14 +49,32 @@ func init() {
 }
 
 func (p Presence) MarshalJSON() ([]byte, error) {
-	return []byte(strconv.Quote(presenceToNames[p])), nil
+	return []byte(strconv.Quote(p.String())), nil
+}
+
+func (p Presence) String() string {
+	s, ok := presenceToNames[p]
+	if ok {
+		return s
+	}
+	return "Unknown"
+}
+
+func (p *Presence) UnmarshalJSON(b []byte) error {
+	var s string
+	err := json.Unmarshal(b, &s)
+	if err != nil {
+		return err
+	}
+	*p, err = ParsePresence(s)
+	return err
 }
 
 func ParsePresence(s string) (Presence, error) {
 	p, ok := namesToPresence[s]
 	var err error
 	if !ok {
-		err = fmt.Errorf("unknown value: %s: %v", s, ErrParse)
+		err = fmt.Errorf("unknown value: %s: %w", s, ErrParse)
 	}
 	return p, err
 }
@@ -94,14 +113,28 @@ func init() {
 }
 
 func (p Period) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf("%q", periodToNames[p])), nil
+	return []byte(fmt.Sprintf("%q", p.String())), nil
+}
+
+func (p *Period) UnmarshalJSON(b []byte) error {
+	var s string
+	err := json.Unmarshal(b, &s)
+	if err != nil {
+		return err
+	}
+	*p, err = ParsePeriod(s)
+	return err
+}
+
+func (p Period) String() string {
+	return periodToNames[p]
 }
 
 func ParsePeriod(s string) (Period, error) {
 	p, ok := namesToPeriod[s]
 	var err error
 	if !ok {
-		err = fmt.Errorf("unknown value: %s: %v", s, ErrParse)
+		err = fmt.Errorf("unknown value: %s: %w", s, ErrParse)
 	}
 	return p, err
 }
@@ -114,6 +147,16 @@ type Duration struct {
 
 func (d Duration) MarshalJSON() ([]byte, error) {
 	return []byte(strconv.Quote(d.String())), nil
+}
+
+func (p *Duration) UnmarshalJSON(b []byte) error {
+	var s string
+	if err := json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+	d, err := time.ParseDuration(s)
+	*p = Duration{d}
+	return err
 }
 
 type MeetingInfo struct {

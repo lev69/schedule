@@ -135,3 +135,13 @@ func getUserMeetings(id UID) ([]Meeting, error) {
 func createMeeting(creator UID, members []Participant, startAt time.Time, duration Duration, repeat Period) (MeetingId, error) {
 	return meetingAdd(MeetingInfo{CreatorId: creator, Members: members, FirstOccurence: startAt, Duration: duration, Repeat: repeat})
 }
+
+func ResetStorage() error {
+	users.Lock()
+	defer users.Unlock()
+	meetings.Lock()
+	defer meetings.Unlock()
+	users.m = make(map[UID]User)
+	meetings.m = make(map[MeetingId]Meeting)
+	return nil
+}
