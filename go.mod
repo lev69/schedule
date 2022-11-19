@@ -1,4 +1,4 @@
-module example.com/schedule
+module github.com/lev69/schedule
 
 go 1.18
 

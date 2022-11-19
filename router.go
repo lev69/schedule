@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	schedule "example.com/schedule/lib"
+	schedule "github.com/lev69/schedule/lib"
 
 	httpSwagger "github.com/swaggo/http-swagger"
 )

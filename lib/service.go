@@ -9,8 +9,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	_ "example.com/schedule/docs"
 )
 
 const (

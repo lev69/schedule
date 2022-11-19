@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"example.com/schedule/lib"
+	"github.com/lev69/schedule/lib"
 )
 
 func TestMain(m *testing.M) {

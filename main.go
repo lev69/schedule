@@ -7,7 +7,7 @@ import (
 	"log"
 	"net/http"
 
-	_ "example.com/schedule/docs"
+	_ "github.com/lev69/schedule/docs"
 )
 
 // @title        Schedule API
