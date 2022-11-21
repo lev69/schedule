@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -434,6 +435,90 @@ func TestUserMeetings(t *testing.T) {
 	expectMeeting(t, meetingIds[5], ids[johnMcClane], getTime("2012-01-01T12:00:00Z"), getDuration("24h"))
 }
 
+func TestFindFreeTime(t *testing.T) {
+	lib.ResetStorage()
+
+	//create users
+	const (
+		johnDoe     = "John Doe"
+		vincentVega = "Vincent Vega"
+		johnMcClane = "John McClane"
+		rickSanchez = "Rick Sanchez"
+	)
+	names := []string{johnDoe, vincentVega, johnMcClane, rickSanchez}
+	ids := make(map[string]lib.UID, len(names))
+	for _, name := range names {
+		response := createUser(name)
+		if expected := http.StatusOK; response.Code != expected {
+			t.Fatalf("response code: expected: %d, actual: %d\n", expected, response.Code)
+		}
+		var id idResult
+		if err := json.Unmarshal(response.Body.Bytes(), &id); err != nil {
+			t.Fatalf("parse response body: %v", err)
+		}
+		ids[name] = id.Id
+	}
+
+	// create meetings
+	paramList := []meetingParams{
+		{creator: ids[johnDoe], members: []lib.UID{ids[johnDoe]}, start: getTime("2022-11-30T12:00:00Z"), duration: getDuration("5h"), period: lib.Once},
+		{creator: ids[vincentVega], members: []lib.UID{ids[vincentVega]}, start: getTime("2020-03-04T18:00:00Z"), duration: getDuration("2h"), period: lib.EveryDay},
+		{creator: ids[johnMcClane], members: []lib.UID{ids[johnMcClane]}, start: getTime("2022-11-02T19:30:00Z"), duration: getDuration("1h30m"), period: lib.EveryWeek},
+		{creator: ids[rickSanchez], members: []lib.UID{ids[rickSanchez]}, start: getTime("2000-02-29T20:30:00Z"), duration: getDuration("45m"), period: lib.EveryDay},
+		{creator: ids[rickSanchez], members: []lib.UID{ids[rickSanchez]}, start: getTime("2022-05-01T0:00:00Z"), duration: getDuration("1h"), period: lib.EveryMonth},
+	}
+	meetingIds := make([]lib.MeetingId, 0)
+	for _, params := range paramList {
+		response := createMeeting(params)
+		if expected := http.StatusOK; response.Code != expected {
+			t.Fatalf("response code: expected: %d, actual: %d\n", expected, response.Code)
+		}
+		var id meetingIdResult
+		if err := json.Unmarshal(response.Body.Bytes(), &id); err != nil {
+			t.Fatalf("parse response body: %v", err)
+		}
+		meetingIds = append(meetingIds, id.Id)
+	}
+
+	// check time 1
+	idList := make([]lib.UID, 0, len(ids))
+	for _, id := range ids {
+		idList = append(idList, id)
+	}
+	startTime := getTime("2022-11-30T09:00:00Z")
+	response := findFreeTime(idList, startTime, getDuration("1h30m"))
+	if expected := http.StatusOK; response.Code != expected {
+		t.Fatalf("response code: expected: %d, actual: %d\n", expected, response.Code)
+	}
+	var foundTime time.Time
+	if err := json.Unmarshal(response.Body.Bytes(), &foundTime); err != nil {
+		t.Fatalf("parse response body: %v", err)
+	}
+	if !foundTime.Equal(startTime) {
+		t.Errorf("time not equal expected: expected: %v, actual: %v", startTime, foundTime)
+	}
+
+	// check time 2
+	startTime = getTime("2022-11-30T16:00:00Z")
+	response = findFreeTime(idList, startTime, getDuration("1h30m"))
+	if expected := http.StatusOK; response.Code != expected {
+		t.Fatalf("response code: expected: %d, actual: %d\n", expected, response.Code)
+	}
+	if err := json.Unmarshal(response.Body.Bytes(), &foundTime); err != nil {
+		t.Fatalf("parse response body: %v", err)
+	}
+	if !foundTime.Equal(getTime("2022-11-30T21:15:00Z")) {
+		t.Errorf("time not equal expected: expected: %v, actual: %v", startTime, foundTime)
+	}
+
+	// check time 3
+	startTime = getTime("2022-11-01T0:00:00Z")
+	response = findFreeTime(idList, startTime, getDuration("23h"))
+	if expected := http.StatusNotFound; response.Code != expected {
+		t.Fatalf("response code: expected: %d, actual: %d\n", expected, response.Code)
+	}
+}
+
 //
 // helper functions
 //
@@ -538,6 +623,22 @@ func sendPresence(user lib.UID, meeting lib.MeetingId, status lib.Presence) *htt
 
 func getUserMeetings(id lib.UID, start time.Time, duration time.Duration) *httptest.ResponseRecorder {
 	req, _ := http.NewRequest("GET", fmt.Sprintf("/user_meetings?id=%d&start_at=%s&duration=%v", id, start.Format(time.RFC3339), duration), nil)
+	return executeRequest(req)
+}
+
+func findFreeTime(users []lib.UID, start time.Time, duration time.Duration) *httptest.ResponseRecorder {
+	var url strings.Builder
+	fmt.Fprintf(&url, "/find_free_time?id=")
+	for i, id := range users {
+		if i > 0 {
+			fmt.Fprintf(&url, ",")
+		}
+		fmt.Fprintf(&url, "%d", id)
+	}
+	fmt.Fprintf(&url, "&start_at=%s", start.Format(time.RFC3339))
+	fmt.Fprintf(&url, "&duration=%v", duration)
+
+	req, _ := http.NewRequest("GET", url.String(), nil)
 	return executeRequest(req)
 }
 

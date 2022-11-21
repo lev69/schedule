@@ -124,7 +124,11 @@ func getUserMeetings(id UID) ([]Meeting, error) {
 	defer users.Unlock()
 	meetings.Lock()
 	defer meetings.Unlock()
-	meetIds := users.m[id].meetings
+	user, ok := users.m[id]
+	if !ok {
+		return nil, ErrNotExist
+	}
+	meetIds := user.meetings
 	meets := make([]Meeting, 0, len(meetIds))
 	for meetId := range meetIds {
 		meets = append(meets, meetings.m[meetId])

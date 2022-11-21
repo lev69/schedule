@@ -44,6 +44,51 @@ info:
   title: Schedule API
   version: "0.9"
 paths:
+  /find_free_time:
+    get:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: get the closest free time for all required users and the specified
+        period
+      parameters:
+      - description: User ID
+        in: path
+        items:
+          type: integer
+        name: id
+        required: true
+        type: array
+      - description: Search period start time in RFC3339. If not specified, the app
+          uses now.
+        in: path
+        name: start_at
+        type: string
+      - description: Search period duration in format '1h2m3s'. Any of values may
+          be ommited.
+        in: path
+        name: duration
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Meeting ID
+          schema:
+            type: integer
+        "400":
+          description: empty
+          schema:
+            type: string
+        "404":
+          description: empty
+          schema:
+            type: string
+        "500":
+          description: empty
+          schema:
+            type: string
+      summary: find closest free time
   /meeting:
     get:
       consumes:

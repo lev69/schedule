@@ -71,18 +71,23 @@ func UserMeetingsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func FindFreeTimeHandler(w http.ResponseWriter, r *http.Request) {
-
+	switch r.Method {
+	case http.MethodGet:
+		findFreeTimeGetHandler(w, r)
+	default:
+		w.WriteHeader(http.StatusNotImplemented)
+	}
 }
 
 // @Summary     get user information
 // @Description returns user information for given id or list with information about all users
 // @Accept      application/x-www-form-urlencoded
 // @Produce     application/json
-// @Param       id  path  uint32              false "User ID"
-// @Success     200       {array}  []lib.User "User information"
-// @Failure     400       {string} string     "empty"
-// @Failure     404       {string} string     "empty"
-// @Failure     500       {string} string     "empty"
+// @Param       id  path     uint32     false "User ID"
+// @Success     200 {array}  []lib.User "User information"
+// @Failure     400 {string} string     "empty"
+// @Failure     404 {string} string     "empty"
+// @Failure     500 {string} string     "empty"
 // @Router      /user [get]
 func userGetHandler(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
@@ -145,10 +150,10 @@ func userGetHandler(w http.ResponseWriter, r *http.Request) {
 // @Description add new user
 // @Accept      application/x-www-form-urlencoded
 // @Produce     application/json
-// @Param       name  path  string              true "User name"
-// @Success     200       {object} lib.UID "User ID"
-// @Failure     400       {string} string     "empty"
-// @Failure     500       {string} string     "empty"
+// @Param       name path     string  true "User name"
+// @Success     200  {object} lib.UID "User ID"
+// @Failure     400  {string} string  "empty"
+// @Failure     500  {string} string  "empty"
 // @Router      /user [post]
 func userPostHandler(w http.ResponseWriter, r *http.Request) {
 	if r.ParseForm() != nil {
@@ -174,11 +179,11 @@ func userPostHandler(w http.ResponseWriter, r *http.Request) {
 // @Description get meeting for given id or list with all meetings
 // @Accept      application/x-www-form-urlencoded
 // @Produce     application/json
-// @Param       id  path  string              false "Meeting ID"
-// @Success     200       {object} lib.Meeting "Meeting information"
-// @Failure     400       {string} string     "empty"
-// @Failure     404       {string} string     "empty"
-// @Failure     500       {string} string     "empty"
+// @Param       id  path     string      false "Meeting ID"
+// @Success     200 {object} lib.Meeting "Meeting information"
+// @Failure     400 {string} string      "empty"
+// @Failure     404 {string} string      "empty"
+// @Failure     500 {string} string      "empty"
 // @Router      /meeting [get]
 func meetingGetHandler(w http.ResponseWriter, r *http.Request) {
 	if r.ParseForm() != nil {
@@ -237,14 +242,14 @@ func meetingGetHandler(w http.ResponseWriter, r *http.Request) {
 // @Description add new meeting
 // @Accept      application/x-www-form-urlencoded
 // @Produce     application/json
-// @Param       creator_id  path  uint32              true "Organizator ID"
-// @Param       member_ids  path  []uint32              true "Member ID list separated with a comma (',')"
-// @Param       start_at  path  string 	true "Meeting start time in RFC3339"
-// @Param       duration  path  string 	true "Meeting duration in format '1h2m3s'. Any of values may be ommited."
-// @Param       period  path  string 	false "string enums" Enums(lib.Period)
-// @Success     200       {object} lib.MeetingId "Meeting ID"
-// @Failure     400       {string} string     "empty"
-// @Failure     500       {string} string     "empty"
+// @Param       creator_id path     uint32        true "Organizator ID"
+// @Param       member_ids path     []uint32      true "Member ID list separated with a comma (',')"
+// @Param       start_at   path     string             true  "Meeting start time in RFC3339"
+// @Param       duration   path     string             true  "Meeting duration in format '1h2m3s'. Any of values may be ommited."
+// @Param       period     path     string             false "string enums" Enums(lib.Period)
+// @Success     200        {object} lib.MeetingId "Meeting ID"
+// @Failure     400        {string} string        "empty"
+// @Failure     500        {string} string        "empty"
 // @Router      /meeting [post]
 func meetingPostHandler(w http.ResponseWriter, r *http.Request) {
 	if r.ParseForm() != nil {
@@ -326,13 +331,13 @@ func meetingPostHandler(w http.ResponseWriter, r *http.Request) {
 // @Description send presence responce
 // @Accept      application/x-www-form-urlencoded
 // @Produce     application/json
-// @Param       user_id  path  uint32           true "User ID"
-// @Param       meeting_id  path  uint32              true "Meeting ID"
-// @Param       presence  path  string              true "string enums" Enums(lib.Presence)
-// @Success     200       {object} lib.MeetingId "Meeting ID"
-// @Failure     400       {string} string     "empty"
-// @Failure     404       {string} string     "empty"
-// @Failure     500       {string} string     "empty"
+// @Param       user_id    path     uint32        true "User ID"
+// @Param       meeting_id path     uint32        true "Meeting ID"
+// @Param       presence   path     string        true "string enums" Enums(lib.Presence)
+// @Success     200        {object} lib.MeetingId "Meeting ID"
+// @Failure     400        {string} string        "empty"
+// @Failure     404        {string} string        "empty"
+// @Failure     500        {string} string        "empty"
 // @Router      /response [put]
 func responsePutHandler(w http.ResponseWriter, r *http.Request) {
 	if r.ParseForm() != nil {
@@ -401,13 +406,13 @@ func responsePutHandler(w http.ResponseWriter, r *http.Request) {
 // @Description get user meetings for specified period
 // @Accept      application/x-www-form-urlencoded
 // @Produce     application/json
-// @Param       id  path  uint32        true "User ID"
-// @Param       start_at  path  string 	true "Search period start time in RFC3339"
-// @Param       duration  path  string 	true "Search period duration in format '1h2m3s'. Any of values may be ommited."
-// @Success     200       {object} lib.MeetingId "Meeting ID"
-// @Failure     400       {string} string     "empty"
-// @Failure     404       {string} string     "empty"
-// @Failure     500       {string} string     "empty"
+// @Param       id       path     uint32        true "User ID"
+// @Param       start_at path     string             true "Search period start time in RFC3339"
+// @Param       duration path     string             true "Search period duration in format '1h2m3s'. Any of values may be ommited."
+// @Success     200      {object} lib.MeetingId "Meeting ID"
+// @Failure     400      {string} string        "empty"
+// @Failure     404      {string} string        "empty"
+// @Failure     500      {string} string        "empty"
 // @Router      /user_meetings [get]
 func userMeetingsGetHandler(w http.ResponseWriter, r *http.Request) {
 	if r.ParseForm() != nil {
@@ -460,6 +465,98 @@ func userMeetingsGetHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set(contentTypeTag, mimeJson)
 	if err = json.NewEncoder(w).Encode(meeting_ids); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+// @Summary     find closest free time
+// @Description get the closest free time for all required users and the specified period
+// @Accept      application/x-www-form-urlencoded
+// @Produce     application/json
+// @Param       id       path     []uint32      true "User ID"
+// @Param       start_at path     string             false "Search period start time in RFC3339. If not specified, the app uses now."
+// @Param       duration path     string             true  "Search period duration in format '1h2m3s'. Any of values may be ommited."
+// @Success     200      {object} lib.MeetingId "Meeting ID"
+// @Failure     400      {string} string        "empty"
+// @Failure     404      {string} string        "empty"
+// @Failure     500      {string} string        "empty"
+// @Router      /find_free_time [get]
+func findFreeTimeGetHandler(w http.ResponseWriter, r *http.Request) {
+	if r.ParseForm() != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	params := parameters{
+		idTag:       multipleValue | parameterRequired,
+		startAtTag:  singleValue,
+		durationTag: singleValue | parameterRequired,
+	}
+	if !checkArgs(&r.Form, params) {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	userList := make([]UID, 0)
+	for _, values := range r.Form[idTag] {
+		for _, value := range strings.Split(values, ",") {
+			id, err := strconv.ParseUint(value, 10, 32)
+			if err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			userList = append(userList, UID(id))
+		}
+	}
+
+	var startAt time.Time
+	if _, ok := r.Form[startAtTag]; ok {
+		var err error
+		startAt, err = time.Parse(time.RFC3339, r.FormValue(startAtTag))
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+	} else {
+		startAt = time.Now()
+	}
+	startAt = startAt.UTC()
+
+	duration, err := time.ParseDuration(r.FormValue(durationTag))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	searchEndTime := startAt.AddDate(1, 0, 0)
+	found := false
+checkTime:
+	for !found && startAt.Before(searchEndTime) {
+		for _, userId := range userList {
+			meets, err := getUserMeetings(userId)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			for _, meet := range meets {
+				meetingStartTime := meet.meetingStartTimeAfter(startAt)
+				if !meetingStartTime.IsZero() && meetingStartTime.Before(startAt.Add(duration)) {
+					startAt = meetingStartTime.Add(meet.Duration.Duration)
+					continue checkTime
+				}
+			}
+		}
+		found = true
+	}
+
+	if !found {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set(contentTypeTag, mimeJson)
+	if err = json.NewEncoder(w).Encode(startAt); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
